@@ -21,8 +21,7 @@ const requestHandler = async function(event) {
   console.log("Message received: " + JSON.stringify(event.body));
   const secret = await getSecret()
   if(validateSignature(event, secret)) {
-    const request = JSON.stringify(event.body);
-    sendDistributionMetric('alma.webhook.action', request.action, 'environment:sandbox');
+    sendDistributionMetric('alma.webhook.action', 1, 'environment:sandbox', `action:${event.body.action}`);
     return JSON.stringify(event.body)
   } else {
     throw "Signature Invalid"
