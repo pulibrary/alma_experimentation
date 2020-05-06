@@ -10,9 +10,6 @@ Metadata:
     SemanticVersion: 1.0.0
     SourceCodeUrl: https://github.com/pulibrary/alma_experimentation
 Parameters:
-  Secret:
-    Type: String
-    Description: Alma Webhook Secret
   StageName:
     Type: String
     Description: Name of the API stage to be deployed
@@ -67,12 +64,18 @@ Resources:
                   description: "200 response"
                   schema:
                     $ref: "#/definitions/Empty"
+                "401":
+                  description: "Invalid Secret"
+                  schema:
+                    $ref: "#/definitions/Empty"
               x-amazon-apigateway-integration:
                 uri:
                   Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebhookReceiver.Arn}/invocations"
                 responses:
                   default:
                     statusCode: "200"
+                  "Signature Invalid":
+                    statusCode: 401
                 passthroughBehavior: "when_no_match"
                 httpMethod: "POST"
                 requestTemplates:
@@ -94,9 +97,13 @@ Resources:
         - 'arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Node12-x:22'
       Policies:
         - AWSLambdaExecute
+        - Version: "2012-10-17"
+          Statement: 
+            - Effect: "Allow"
+              Action: "secretsmanager:GetSecretValue"
+              Resource: "*"
       Environment:
         Variables:
-          almaSecret: !Sub "${Secret}"
           DD_FLUSH_TO_LOG: True
       Events:
         PostWebhook:

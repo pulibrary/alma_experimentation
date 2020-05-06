@@ -33,10 +33,11 @@ hmac = Base64.encode64(OpenSSL::HMAC.digest(digest, KEY, req))
 puts req
 puts 'Posting to server'
 begin
-  RestClient.post URL,
+  output = RestClient.post URL,
                   req,
                   content_type: :json,
                   'X-Exl-Signature' => hmac
+  puts output
   puts 'Done'
 rescue StandardError => e
   puts "ERROR: #{e.http_code} #{e.response}"
