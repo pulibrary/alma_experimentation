@@ -1,0 +1,14 @@
+{
+  "name": "alma_webhook_monitor",
+  "version": "1.0.0",
+  "description": "Receive and monitor Alma Webhooks with Datadog.",
+  "author": "Trey Pendragon",
+  "license": "Apache-2.0",
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^25.3.0"
+  },
+  "scripts": {
+    "test": "jest"
+  }
+}

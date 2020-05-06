@@ -1,0 +1,65 @@
+Transform: "AWS::Serverless-2016-10-31"
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: alma-webhook-monitor
+    Description: Receive webhooks from Alma and log them.
+    Author: tpendragon
+    SpdxLicenseId: Apache-2.0
+    Labels: ["alma", "monitoring"]
+    HomePageUrl: https://github.com/pulibrary/alma_experimentation
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/pulibrary/alma_experimentation
+Parameters:
+  Secret:
+    Type: String
+    Description: Alma Webhook Secret
+  StageName:
+    Type: String
+    Description: Name of the API stage to be deployed
+    Default: latest
+Resources:
+  APIGateway:
+    Type: "AWS::Serverless::Api"
+    Properties:
+      Name: !Sub "${AWS::StackName}-api"
+      StageName: !Sub "${StageName}"
+      EndpointConfiguration: "REGIONAL"
+      Cors:
+        AllowMethods: "'GET','POST'"
+        AllowOrigin: "'*'"
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          version: "2018-12-14T18:28:00Z"
+        schemes:
+          - "http"
+          - "https"
+        paths:
+          /webhooks:
+            get:
+              produces:
+                - "application/json"
+              parameters:
+                - name: "challenge"
+                  in: "query"
+                  required: true
+                  type: "string"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseTemplates:
+                      application/json: "{\"challenge\":\"$input.params('challenge')\"}"
+                requestTemplates:
+                  application/json: "{ \"statusCode\": 200}"
+                passthroughBehavior: "when_no_match"
+                type: "mock"
+Outputs:
+  Endpoint:
+    Description: Endpoint URL
+    Value: !Sub "https://${APIGateway}.execute-api.${AWS::Region}.amazonaws.com/${APIGateway.Stage}/webhooks"
