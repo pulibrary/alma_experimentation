@@ -59,6 +59,52 @@ Resources:
                   application/json: "{ \"statusCode\": 200}"
                 passthroughBehavior: "when_no_match"
                 type: "mock"
+            post:
+              produces:
+                - "application/json"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebhookReceiver.Arn}/invocations"
+                responses:
+                  default:
+                    statusCode: "200"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                requestTemplates:
+                  application/json: >-
+                    #set($inputRoot = $input.path('$')) {
+                      "signature": "$input.params().header.get('X-Exl-Signature')",
+                      "body": $input.json('$')
+                    }
+                type: "aws"
+  WebhookReceiver:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Runtime: nodejs12.x
+      Handler: index.handler
+      MemorySize: 512
+      Timeout: 30
+      CodeUri: ./src
+      Layers:
+        - 'arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Node12-x:22'
+      Policies:
+        - AWSLambdaExecute
+      Environment:
+        Variables:
+          almaSecret: !Sub "${Secret}"
+          DD_FLUSH_TO_LOG: True
+      Events:
+        PostWebhook:
+          Type: Api
+          Properties:
+            Path: /webhooks
+            Method: POST
+            RestApiId: !Ref APIGateway
 Outputs:
   Endpoint:
     Description: Endpoint URL

@@ -30,6 +30,7 @@ req = {
 digest = OpenSSL::Digest.new('sha256')
 hmac = Base64.encode64(OpenSSL::HMAC.digest(digest, KEY, req))
 
+puts req
 puts 'Posting to server'
 begin
   RestClient.post URL,
