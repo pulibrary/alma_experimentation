@@ -8,6 +8,7 @@ const validateSignature = function(event, secret) {
              .digest('base64');
   return hash == event.signature
 }
+const { datadog, sendDistributionMetric } = require('datadog-lambda-js');
 
 async function getSecret() {
   return client.getSecretValue({SecretId: "alma/sandbox/webhookSecret"}).promise().then((data) => {
@@ -20,10 +21,12 @@ const requestHandler = async function(event) {
   console.log("Message received: " + JSON.stringify(event.body));
   const secret = await getSecret()
   if(validateSignature(event, secret)) {
+    const request = JSON.stringify(event.body);
+    sendDistributionMetric('alma.webhook.action', request.action, 'environment:sandbox');
     return JSON.stringify(event.body)
   } else {
     throw "Signature Invalid"
   }
 }
 
-exports.handler = requestHandler
+exports.handler = datadog(requestHandler);
